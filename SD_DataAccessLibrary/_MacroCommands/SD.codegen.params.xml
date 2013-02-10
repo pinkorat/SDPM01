@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+<PARAMS ModifiedBy="jmcinnes" ModifiedDate="10/10/2003 4:35:02 AM">
+  
+  <SECTION name="DB">
+    <ITEM key="" value="" />
+    <ITEM key="SERVER" value="WHITEDELL" />
+    <ITEM key="DATABASE" value="SDPM01_Master" />
+    <ITEM key="USERNAME" value="arc_user" />
+    <ITEM key="PASSWORD" value="arcuser001" />
+    <ITEM key="TIMEOUT" value="30" />
+  </SECTION>
+  
+  <SECTION name="DEFINE">
+    <ITEM key="SOURCEFOLDER" value="C:\__Q1\KGRS042\Main\SDPM01\SD_DataAccessLibrary" />
+    <ITEM key="MACRODEFS" value= "C:\__Q1\KGRS042\Main\SDPM01\SD_DataAccessLibrary\_MacroDefs" />
+    <ITEM key="OUTFOLDER" value="C:\__Q1\KGRS042\Main\SDPM01\" />
+    <ITEM key="APPLICATION_NAMESPACE" value="SD" />
+    <ITEM key="SUBSYSTEM_NAMESPACE" value="" />
+    <ITEM key="NAMESPACE" value="" />
+    <ITEM key="FILE_PREFIX" value="SD" />
+    <ITEM key="PARENT" value="" />
+  </SECTION>
+ 
+</PARAMS>

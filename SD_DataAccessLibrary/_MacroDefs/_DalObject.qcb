@@ -1,0 +1,887 @@
+'' _DalObject.qcb
+''
+// Generated: `CURRENT_TIME`
+?!INIT sep, ""
+?LoadTable `DATABASE_NAME`.`DBTABLE_NAME`
+?Use `DBTABLE_NAME`
+''
+?DEFINE MODULE_NAME [`APPLICATION_NAMESPACE``SUBSYSTEM_NAMESPACE``NAMESPACE`_Da`DBOBJECT_NAME`]
+''?EXPAND _SourceFileHeader `APPLICATION_NAMESPACE``SUBSYSTEM_NAMESPACE``NAMESPACE`_Da`DBOBJECT_NAME`
+''
+#define __REALCHANGE__
+//#define __FETCHCACHE__
+//#define __FORMINTERFACE__
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using ASL;
+using TXT = ASL.Text.Text;
+using SQL = ASL.SQL;
+?If Eval '`SUBSYSTEM_NAMESPACE`' == ''
+?DEFINE APPLICATION_PREFIX [`APPLICATION_NAMESPACE`]
+
+namespace `APPLICATION_NAMESPACE`
+?ElseIf Eval '`NAMESPACE`' == ''
+?DEFINE APPLICATION_PREFIX [`APPLICATION_NAMESPACE``SUBSYSTEM_NAMESPACE`]
+using `APPLICATION_NAMESPACE`;
+
+namespace `APPLICATION_NAMESPACE`.`SUBSYSTEM_NAMESPACE`
+?Else
+?DEFINE APPLICATION_PREFIX [`APPLICATION_NAMESPACE``SUBSYSTEM_NAMESPACE``NAMESPACE`]
+using `APPLICATION_NAMESPACE`;
+using `APPLICATION_NAMESPACE`.`SUBSYSTEM_NAMESPACE`;
+
+namespace `APPLICATION_NAMESPACE`.`SUBSYSTEM_NAMESPACE`.`NAMESPACE`
+?EndIf
+{
+#if __FORMINTERFACE__
+  public class Da`DBOBJECT_NAME` : Db`DBOBJECT_NAME`, ASL.ApplicatFieldType.IDaForm_I
+#else
+  public class Da`DBOBJECT_NAME` : Db`DBOBJECT_NAME`
+#endif
+  {
+		#region fetch cache
+#if __FETCHCACHE__
+		private Hashtable fetchTable;
+		private Hashtable missTable;
+		public int _hitCount, _ioCount;
+		public int _maxNumEnt = 100;
+		public int _minNumEnt = 70;
+		public int _maxMissEnt = 10;
+			
+		private struct FetchKey
+		{
+?ForEachKeyField
+      public `CsDataType` `Name`;
+?EndFor
+		}
+		public class FetchEntry
+		{
+			public int hitCount = 1;
+			public Dd`DBOBJECT_NAME` dd`DBOBJECT_NAME`;
+			public FetchEntry(Dd`DBOBJECT_NAME` dd`DBOBJECT_NAME`) { this.dd`DBOBJECT_NAME` = dd`DBOBJECT_NAME`; }
+		}
+#endif
+		#endregion fetch cache
+    #region fields
+?Expand _DaFields
+?EndExpand
+    #endregion fields
+    #region form interface
+#if __FORMINTERFACE__
+		public bool GetDescription(int `IDFIELD`, out string description)
+		{
+			bool found = GetById(`IDFIELD`);
+			if (found) description = this.Description ; else description = "";
+			return found;
+		}
+		
+		public bool GetCode(int `IDFIELD`, out string code)
+		{
+			bool found = GetById(`IDFIELD`);
+			if (found) code = this.Code; else code = "";
+			return found;
+		}
+
+		public bool GetReference(string code, int parentREF, out int `IDFIELD`)
+		{
+			bool found = GetByPK(parentREF, code);
+			if (found) `IDFIELD` = this.`IDFIELD`; else `IDFIELD` = 0;
+			return found;
+		}
+
+		public System.Collections.ArrayList GetChoices(int parentREF, string attributes)
+		{
+			Dn`DBOBJECT_NAME` dn`DBOBJECT_NAME` = FillByParent(parentREF);
+			ArrayList choices = new ArrayList();
+			IEnumerator en = dn`DBOBJECT_NAME`.GetEnumerator();
+			Dd`DBOBJECT_NAME` dd`DBOBJECT_NAME`;
+			while (en.MoveNext())
+			{
+				dd`DBOBJECT_NAME` = (Dd`DBOBJECT_NAME`)en.Current;
+				choices.Add(dd`DBOBJECT_NAME`.`IDFIELD`.ToString() + "," + dd`DBOBJECT_NAME`.Description);
+			}
+			return choices;
+		}
+
+    public int Id { get { return store.Buffer.`IDFIELD`; } }
+		public DateTime Modified { get { return DateTime.MinValue; } set {} }
+		public string ModifiedBy { get { return ""; } set {} }
+		public int PropertyBagREF{ get { return 0; } set {} }
+		public bool IsModified { get { return store.Modified(); } }
+#endif
+    #endregion form interface
+
+    private Ds`DBOBJECT_NAME` store = new Ds`DBOBJECT_NAME`();
+
+    public Da`DBOBJECT_NAME`(SQL.DBConnection dbConnection) : base(dbConnection)
+    {
+      store.ClearAll();
+?If Column Content_X Exists
+      Content = new PropertyList();
+?EndIf
+    }
+
+    public void Clear()
+    {
+      store.ClearAll();
+?If Column Content_X Exists
+      Content = new PropertyList();
+?EndIf
+    }
+''==============================================================================
+?If Table HasPrimaryKey
+''==============================================================================
+
+    public bool GetByPK(
+?! SET sep, ""
+?ForEachKeyField
+?OutputWrap `!sep``CsDataType` `Name`
+?! SET sep, ", "
+?EndFor
+?Output )
+    {
+?ForEachKeyField
+      store.Buffer.`Name` = `Name`;
+?EndFor
+      bool found = GetByPK(ref store);
+?If Column Content_X Exists
+      Content = new PropertyList(store.Buffer.Content_X);
+?EndIf
+      return found;
+    }
+?EndIf
+''==============================================================================
+?If Table HasIdentity
+''==============================================================================
+
+    public bool GetById(int `IDFIELD`)
+    {
+      store.Buffer.`IDFIELD` = `IDFIELD`;
+      bool found = GetById(ref store);
+?If Column Content_X Exists
+      Content = new PropertyList(store.Buffer.Content_X);
+?EndIf
+      return found;
+    }
+?EndIf
+''==============================================================================
+
+    public bool Insert()
+    {
+?If Column Content_X Exists
+      store.Buffer.Content_X = Content.SerializeToXml();
+      store.modContent_X = true;
+?EndIf
+      return Insert(ref store);
+    }
+''==============================================================================
+?If Table HasIdentity
+''==============================================================================
+
+    public bool Save()
+    {
+?If Column Content_X Exists
+      store.Buffer.Content_X = Content.SerializeToXml();
+      store.modContent_X = true;
+?EndIf
+      return UpdateById(ref store);
+    }
+''==============================================================================
+?Else
+''==============================================================================
+    public bool Save()
+    {
+      return UpdateByPK(ref store);
+    }
+?EndIf
+''==============================================================================
+
+    public void SetBuffer(Dd`DBOBJECT_NAME` buffer)
+    {
+      store.Buffer = buffer;
+    }
+
+    public bool _IsModified
+    {
+      get { return store.Modified(); }
+    }
+
+    public Dd`DBOBJECT_NAME` GetBuffer()
+    {
+      return store.Buffer; 
+    }
+
+    public void SetModFlags() { store.SetModFlags(); }
+    public void ClearModFlags() { store.ClearModFlags(); }
+    public void SetDefaults() { store.Buffer.SetDefaults(); }
+
+    #region fetch cache
+#if __FETCHCACHE__
+		public bool FetchByPK(
+?! SET sep, ""
+?ForEachKeyField
+?OutputWrap `!sep``CsDataType` `Name`
+?! SET sep, ", "
+?EndFor
+?Output )
+		{
+			if (fetchTable == null)
+			{
+				missTable = new Hashtable(_maxMissEnt);
+				fetchTable = new Hashtable(_maxNumEnt);
+				_hitCount = 0;
+				_ioCount = 0;
+			}
+			
+			FetchEntry ent;
+			FetchKey key;
+?ForEachKeyField
+      key.`Name` = `Name`;
+?EndFor
+			if (fetchTable.Contains(key))
+			{
+				_hitCount++;
+				ent = (FetchEntry)fetchTable[key];
+				SetBuffer(ent.dd`DBOBJECT_NAME`);
+				if (ent.hitCount < int.MaxValue) ent.hitCount++;
+				return true;
+			}
+			if (missTable.Contains(key)) return false;
+			
+			_ioCount++;
+?ForEachKeyField
+      store.Buffer.`Name` = `Name`;
+?EndFor
+			bool found = GetByPK(ref store);
+			// if not found remember as miss, clear miss table when full
+			if (!found)
+			{
+				if (missTable.Count >= _maxMissEnt) missTable.Clear();
+				missTable.Add(key, null);
+				return false;
+			}
+			
+			ent = new FetchEntry(store.Buffer);
+			fetchTable.Add(key, ent);
+			
+			if (fetchTable.Count < _maxNumEnt) return true;
+			
+			// remove least used entries from table
+			Stack ks = new Stack();
+			for(int b = 0; b < 32; b++) //in 32 passes all 32 bit integers will be zeroed.
+			{
+				foreach(System.Collections.DictionaryEntry de in fetchTable)
+				{
+					ent = (FetchEntry)de.Value;
+					ent.hitCount /= 2;
+					if (ent.hitCount == 0)
+					{
+						ks.Push(de.Key);
+						if (ks.Count >= _maxNumEnt - _minNumEnt) break;
+					}
+				}
+				if (ks.Count >= _maxNumEnt - _minNumEnt) break;
+			}
+			while(ks.Count > 0)
+			{
+				key = (FetchKey)ks.Pop();
+				fetchTable.Remove(key);
+			}
+			return true;
+		}
+#endif
+    #endregion fetch cache
+
+		#region extend
+		public Dn`DBOBJECT_NAME` Fill()
+		{
+			string sqlWhere = "Id >= 100";
+?If Eval "`KEYFIELD`" == "$NONE$"
+			return Fill(sqlWhere, "Id", 0, true);
+?Else
+			return Fill(sqlWhere, "`KEYFIELD`", 0, true);
+?EndIf
+		}
+?If Eval "`PARENTREF`" != "$NONE$"
+		public Dn`DBOBJECT_NAME` FillBy`PARENTREF`(int parentREF)
+		{
+			string sqlWhere = string.Format("`PARENTREF`REF={0}", parentREF);
+?If Eval "`KEYFIELD`" == "$NONE$"
+			return Fill(sqlWhere, "Id", 0, true);
+?Else
+			return Fill(sqlWhere, "`KEYFIELD`", 0, true);
+?EndIf
+		}
+?EndIf
+		#endregion extend
+  }
+
+
+  public class Db`DBOBJECT_NAME` : ASL.SQL.TableDataObject
+  {
+?! INIT ix, 0
+?ForEachField
+    private const int idx`Name` = `!ix`;
+?! INCR ix
+?EndFor
+    private const int idxNUMCOLS = `!ix`;
+    // Column names
+    static readonly protected string[] sqlCols =
+    {
+
+?! SET sep, "    "
+?ForEachField
+?OutputWrap `!sep` "[`Name`]"
+?! SET sep, ","
+?EndFor
+    };
+    static public string SqlColumnList { get { return string.Join(",", sqlCols); } }
+    static public string[] SqlCols { get { return sqlCols; } }
+
+''
+    // set database connection and other initial values
+    public Db`DBOBJECT_NAME`(SQL.DBConnection dbConnection)
+    {
+      base.dbConnection = dbConnection;
+      tableName = "`DBTABLE_NAME`";
+      identityColumnName = "`IDFIELD`";
+      sqlColumns = string.Join(",",  sqlCols);
+    }
+
+		public string TableName { get { return tableName; } set { tableName = value; } }
+
+''==============================================================================
+?If Table HasIdentity
+''==============================================================================
+    public bool GetById(int `IDFIELD`, out Dd`DBOBJECT_NAME` buffer)
+    {
+      Ds`DBOBJECT_NAME` ds`DBOBJECT_NAME` = new Ds`DBOBJECT_NAME`();
+      ds`DBOBJECT_NAME`.Buffer.`IDFIELD` = `IDFIELD`;
+      if (!GetById(ref ds`DBOBJECT_NAME`)) 
+      {
+        buffer = new Dd`DBOBJECT_NAME`();
+        return false;
+      }
+      buffer = ds`DBOBJECT_NAME`.Buffer;
+      return true;
+    }
+
+    public bool GetById(ref Ds`DBOBJECT_NAME` xStr)
+    {
+      string sql = "SELECT " + sqlColumns 
+        + " FROM " + tableName + NOLOCKSQL
+        + " WHERE `IDFIELD` = " + xStr.Buffer.`IDFIELD`.ToString();
+      System.Data.DataRow dr;
+      if (GetSQL(sql, out dr))
+      {
+        xStr = Load(dr);
+        xStr.ResultCode = SUCCESS;
+        return true;
+      }
+      else
+      {
+        xStr.ClearAll();
+        xStr.ResultCode = "NOTFND";
+        xStr.ResultMessage = "Row not found";
+        return false;
+      }
+    }
+?EndIf
+''==============================================================================
+?If Table HasPrimaryKey
+''==============================================================================
+
+    public bool GetByPK(
+?! INIT x, "  "
+?ForEachKeyField
+      `!x``CsDataType` `Name`
+?! SET x, ", "
+?EndFor
+      , out Dd`DBOBJECT_NAME` buffer)
+    {
+      Ds`DBOBJECT_NAME` ds`DBOBJECT_NAME` = new Ds`DBOBJECT_NAME`();
+?ForEachKeyField
+      ds`DBOBJECT_NAME`.Buffer.`Name` = `Name`;
+?EndFor
+      if (!GetByPK(ref ds`DBOBJECT_NAME`))
+      {
+        buffer = new Dd`DBOBJECT_NAME`();
+        return false;
+      }
+      buffer = ds`DBOBJECT_NAME`.Buffer;
+      return true;
+    }
+
+    public bool GetByPK(ref Ds`DBOBJECT_NAME` xStr)
+    {
+      string sql = "SELECT " + sqlColumns
+      + " FROM " + tableName + NOLOCKSQL
+?! SET x, " WHERE"
+?ForEachKeyField
+?If Column `ColumnName` IsNumeric 
+      + "`!x` `Name` = " + xStr.Buffer.`Name`.ToString()
+?ElseIf Column `ColumnName` IsDateTime
+      + "`!x` `Name` = " + TXT.q1(xStr.Buffer.`Name`.ToShortDateString())
+?Else
+      + "`!x` `Name` = " + TXT.q1(xStr.Buffer.`Name`)
+?EndIf
+?! SET x, " AND"
+?EndFor
+?Output ;
+      System.Data.DataRow dr;
+      if (GetSQL(sql, out dr))
+      {
+        xStr = Load(dr);
+        xStr.ResultCode = SUCCESS;
+        return true;
+      }
+      else
+      {
+        xStr.ClearAll();
+        xStr.ResultCode = "NOTFND";
+        xStr.ResultMessage = "Row not found";
+        return false;
+      }
+    }
+?EndIf
+''==============================================================================
+?If Table HasIdentity
+
+    public bool UpdateById(ref Ds`DBOBJECT_NAME` xStr)
+    {
+      int rowsUpdated = 0;
+      if (xStr.Modified())
+      {
+        string sql = "UPDATE " + tableName + " SET " + BuildUpdateSQL(xStr) + " WHERE"
+          + " `IDFIELD` = " + xStr.Buffer.`IDFIELD`.ToString();
+        if(!UpdateSQL(sql)) return false;
+        rowsUpdated = _rowsAffected;
+      }
+      bool ok = GetById(ref xStr);
+      _rowsAffected = rowsUpdated;
+      return ok;
+    }
+
+    public bool DeleteById(int `IDFIELD`)
+    {
+      string sql = "DELETE FROM " + tableName + " WHERE `IDFIELD` = " + `IDFIELD`.ToString();
+      return DeleteSQL(sql);
+    }
+?EndIf
+''==============================================================================
+?If Table HasPrimaryKey
+''==============================================================================
+
+    public bool UpdateByPK(ref Ds`DBOBJECT_NAME` xStr)
+    {
+      int rowsUpdated = 0;
+      if (xStr.Modified())
+      {
+        string sql = "UPDATE " + tableName + " SET " + BuildUpdateSQL(xStr) + " WHERE"
+?! SET x, ""
+?ForEachKeyField
+?If Column `ColumnName` IsNumeric 
+      + "`!x` `Name` = " + xStr.Buffer.`Name`.ToString()
+?ElseIf Column `ColumnName` IsDateTime
+      + "`!x` `Name` = " + TXT.q1(xStr.Buffer.`Name`.ToShortDateString())
+?Else
+      + "`!x` `Name` = " + TXT.q1(xStr.Buffer.`Name`)
+?EndIf
+?! SET x, " AND"
+?EndFor
+?Output ;
+        if(!UpdateSQL(sql)) return false;
+        rowsUpdated = _rowsAffected;
+      }
+      bool ok = GetByPK(ref xStr);
+      _rowsAffected = rowsUpdated;
+      return ok;
+    }
+
+    public bool DeleteByPK(
+?! SET x, "  "
+?ForEachKeyField
+      `!x``CsDataType` `Name`
+?! SET x, ", "
+?EndFor
+?Output )
+    {
+      string sql = "DELETE FROM " + tableName + " WHERE"
+?! SET x, ""
+?ForEachKeyField
+?If Column `ColumnName` IsNumeric
+      + "`!x` `Name` = " + `Name`.ToString()
+?ElseIf Column `ColumnName` IsDateTime
+      + "`!x` `Name` = " + TXT.q1(`Name`.ToShortDateString())
+?Else
+      + "`!x` `Name` = " + TXT.q1(`Name`)
+?EndIf
+?! SET x, " AND"
+?EndFor
+?Output ;
+      return DeleteSQL(sql);
+    }
+
+    public bool DeleteByPK(ref Ds`DBOBJECT_NAME` xStr)
+    {
+      string sql = "DELETE FROM " + tableName + " WHERE"
+?! SET x, ""
+?ForEachKeyField
+?If Column `ColumnName` IsNumeric
+      + "`!x` `Name` = " + xStr.Buffer.`Name`.ToString()
+?ElseIf Column `ColumnName` IsDateTime
+      + "`!x` `Name` = " + TXT.q1(xStr.Buffer.`Name`.ToShortDateString())
+?Else
+      + "`!x` `Name` = " + TXT.q1(xStr.Buffer.`Name`)
+?EndIf
+?! SET x, " AND"
+?EndFor
+?Output ;
+      return DeleteSQL(sql);
+    }
+''==============================================================================
+?EndIf
+''==============================================================================
+?If Table HasIdentity
+''==============================================================================
+    public bool Insert(ref Ds`DBOBJECT_NAME` xStr)
+    {
+      int Id;
+      string sql = BuildInsertSQL(xStr);
+      if (!InsertIdSQL(sql, out Id)) return false;
+      xStr.Buffer.`IDFIELD` = Id;
+      return GetById(ref xStr);
+    }
+''==============================================================================
+?ElseIf Table HasPrimaryKey
+''==============================================================================
+    public bool Insert(ref Ds`DBOBJECT_NAME` xStr)
+    {
+      string sql = BuildInsertSQL(xStr);
+      if (!InsertSQL(sql)) return false;
+      return GetByPK(ref xStr);
+    }
+''==============================================================================
+?Else
+''==============================================================================
+    public bool Insert(ref Ds`DBOBJECT_NAME` xStr)
+    {
+      string sql = BuildInsertSQL(xStr);
+      return InsertSQL(sql);
+    }
+?EndIf
+''==============================================================================
+
+    public bool GetBySql(string sqlWhere, ref Ds`DBOBJECT_NAME` xStr)
+    {
+      string sql = "SELECT " + sqlColumns
+      + " FROM " + tableName + NOLOCKSQL + " WHERE (" + sqlWhere + ")";
+      System.Data.DataRow dr;
+      if (GetSQL(sql, out dr))
+      {
+        xStr = Load(dr);
+        xStr.ResultCode = SUCCESS;
+        return true;
+      }
+      else
+      {
+        xStr.ClearAll();
+        xStr.ResultCode = "NOTFND";
+        xStr.ResultMessage = "Row not found";
+        return false;
+      }
+    }
+
+''==============================================================================
+
+    public Dn`DBOBJECT_NAME` Fill(string xWhere, string xOrder, int xTop, bool xNoLock)
+    {
+      System.Data.DataTable dt = FillDataTable(xWhere, xOrder, xTop, xNoLock);
+      Dn`DBOBJECT_NAME` `DBOBJECT_NAME`List = new Dn`DBOBJECT_NAME`(dt.Rows.Count);
+      foreach(System.Data.DataRow adr in dt.Rows)
+      {
+        `DBOBJECT_NAME`List.Add(Load(adr).Buffer);
+      }
+      return `DBOBJECT_NAME`List;
+    }
+
+    static public Ds`DBOBJECT_NAME` Load(System.Data.DataRow dr)
+    {
+      Ds`DBOBJECT_NAME` tStr = new Ds`DBOBJECT_NAME`();
+      tStr.ClearBuffer();
+?ForEachField
+''      tStr.Buffer.`Name` = `DBCONVERT`(dr[idx`Name`]);
+      if (dr[idx`Name`] != System.DBNull.Value) tStr.Buffer.`Name` = (`CsDataType`)dr[idx`Name`];
+?EndFor
+      return tStr;
+    }
+
+    public string BuildInsertSQL(Ds`DBOBJECT_NAME` xStr)
+    {
+?If Table !HasIdentity
+      SQL.SqlCommandBuilder sc = new SQL.SqlCommandBuilder(
+        SQL.sqlVerb.InsertWoId, tableName);
+?Else
+      SQL.SqlCommandBuilder sc = new SQL.SqlCommandBuilder(
+        SQL.sqlVerb.Insert, tableName);
+?EndIf
+?ForEachField
+?If Column `ColumnName` !IsReadonly
+''?If Not IsIdentity And ValueType <> "Timestamp" And ValueType <> "CreatedDate"
+      if (xStr.mod`Name`)
+        sc.AddColumn(sqlCols[idx`Name`], xStr.Buffer.`Name`);
+?EndIf
+?EndFor
+      return sc.CommandText;
+    }
+
+    public string BuildUpdateSQL(Ds`DBOBJECT_NAME` xStr)
+    {
+      SQL.SqlCommandBuilder sc = new SQL.SqlCommandBuilder(SQL.sqlVerb.Update);
+?If Table !HasIdentity
+?ForEachField
+?If Column `ColumnName` !IsReadonly
+''?If Not IsKey And ValueType <> "Timestamp" And ValueType <> "CreatedDate"
+      if (xStr.mod`Name`)
+        sc.AddColumn(sqlCols[idx`Name`], xStr.Buffer.`Name`);
+?EndIf
+?EndFor
+?Else
+?ForEachField
+?If Column `ColumnName` !IsReadonly
+''?If Not IsIdentity And ValueType <> "Timestamp" And ValueType <> "CreatedDate"
+      if (xStr.mod`Name`)
+        sc.AddColumn(sqlCols[idx`Name`], xStr.Buffer.`Name`);
+?EndIf
+?EndFor
+?EndIf
+      return sc.ColumnList;
+    }
+''
+?ForEachIndex
+
+    //  Index = `INDEXNAME`
+    public bool GetBy_`INDEXNAME`(
+?! SET x, "  "
+?ForEachField
+    `!x``CsDataType` `Name`
+?! SET x, ", "
+?EndFor
+    , out Dd`DBOBJECT_NAME` buffer)
+  {
+    string sql = "SELECT " + sqlColumns
+    + " FROM " + tableName + NOLOCKSQL
+?! SET x, " WHERE"
+?ForEachField
+?If Column `ColumnName` IsNumeric 
+    + "`!x` `Name` = " + `Name`.ToString()
+?ElseIf Column `ColumnName` IsDateTime
+    + "`!x` `Name` = " + TXT.q1(`Name`.ToShortDateString())
+?Else
+    + "`!x` `Name` = " + TXT.q1(`Name`)
+?EndIf
+?! SET x, " AND"
+?EndFor
+?Output ;
+    System.Data.DataRow dr;
+    if (GetSQL(sql, out dr))
+    {
+      Ds`DBOBJECT_NAME` ds`DBOBJECT_NAME` = Load(dr);
+      buffer = ds`DBOBJECT_NAME`.Buffer;
+      return true;
+    }
+    else
+    {
+      buffer = new Dd`DBOBJECT_NAME`();
+      return false;
+    }
+  }
+?EndFor
+
+    // Reader
+		public System.Data.SqlClient.SqlDataReader GetReader(string sqlWhere, string sqlOrder)
+		{
+			string sql = "SELECT " + sqlColumns + " FROM " + tableName;
+			if (sqlWhere != string.Empty) sql += " WHERE " + sqlWhere;
+			if (sqlOrder != string.Empty) sql += " ORDER BY " + sqlOrder;
+			System.Data.SqlClient.SqlCommand cd1 = new System.Data.SqlClient.SqlCommand(sql);
+			cd1.Connection =  dbConnection.Connection;
+			cd1.CommandTimeout = 300;
+			System.Data.SqlClient.SqlDataReader reader;
+			reader = cd1.ExecuteReader();
+			return reader;
+		}
+		
+		static public Dd`DBOBJECT_NAME` LoadRow(System.Data.SqlClient.SqlDataReader reader)
+		{
+			Dd`DBOBJECT_NAME` rowBuffer = new Dd`DBOBJECT_NAME`();
+			rowBuffer.Clear();
+?ForEachField
+?If Column `ColumnName` IsType timestamp
+			if (!reader.IsDBNull(idx`Name`)) rowBuffer.`Name` = GetTimestamp(idx`Name`, reader);
+?Else
+			if (!reader.IsDBNull(idx`Name`)) rowBuffer.`Name` = reader.Get`DBDATATYPE`(idx`Name`);
+?EndIf
+?EndFor
+			return rowBuffer;
+		}
+  }
+''
+''#######################################################################################
+''
+  [Serializable]
+  public class Ds`DBOBJECT_NAME`
+  {
+    public Dd`DBOBJECT_NAME` Buffer = new Dd`DBOBJECT_NAME`();
+
+    public bool IsNew;
+    public bool IsDeleted;
+
+?ForEachField
+?If Column `Name` !IsReadonly
+    public bool mod`Name`;
+?EndIf
+?EndFor
+
+    public object Tag;
+    public int RowsAffected;
+    public string ResultCode;
+    public string ResultMessage;
+
+    public bool Modified()
+    {
+      return
+?! SET sep, "        "
+?ForEachField
+?If Column `Name` !IsReadonly
+
+?OUTPUTWRAP `!sep`mod`Name`
+?! SET sep, "     || " 
+?EndIf
+?EndFor
+?OUTPUTWRAP ;
+    }
+
+    public void ClearAll() 
+    { 
+      Buffer.Clear(); 
+      ClearModFlags();
+      ClearControl();
+    }
+
+    public void ClearBuffer() { Buffer.Clear(); }
+
+    public void ClearControl()
+    {
+      IsNew = false;
+      IsDeleted = false;
+      Tag = null;
+      RowsAffected = 0;
+      ResultCode = "";
+      ResultMessage = "";
+    }
+
+    public void ClearModFlags()
+    {
+?ForEachField
+?If Column `Name` !IsReadonly
+      mod`Name` = false;
+?EndIf
+?EndFor
+    }
+
+    public void SetModFlags()
+    {
+?ForEachField
+?If Column `Name` !IsReadonly
+      mod`Name` = true;
+?EndIf
+?EndFor
+    }
+  }
+
+  [Serializable]
+  public class Dd`DBOBJECT_NAME` : DdBase
+  {
+?ForEachField
+?If Column `ColumnName` !IsInDdBase
+    public `CsDataType` `Name` { get; set; }
+?EndIf
+?EndFor
+
+?ForEachField
+?If Column `ColumnName` !IsInDdBase
+    public const string `Name`_N = "`Name`";
+?EndIf
+?EndFor
+
+?ForEachField
+?If Column `ColumnName` !IsInDdBase
+?If Column `ColumnName` IsText
+    public const int `Name`_L = `Length`;
+?EndIf
+?EndIf
+?EndFor
+
+    public Dd`DBOBJECT_NAME`()
+	  : base()
+    {
+      Clear();
+    }
+
+    public Dd`DBOBJECT_NAME`(Dd`DBOBJECT_NAME` original)
+	  : base(original)
+    {
+?ForEachField
+?If Column `ColumnName` !IsInDdBase
+      `Name` = original.`Name`;
+?EndIf
+?EndFor
+    }
+
+    public override void Clear()
+    {
+      base.Clear();
+?ForEachField
+?If Column `ColumnName` !IsInDdBase
+      `Name` = `ZeroValue`;
+?EndIf
+?EndFor
+    }
+
+    public override void SetDefaults()
+    {
+      base.SetDefaults();
+?ForEachField
+?If Column `ColumnName` !IsInDdBase
+?If Column `Name` !IsReadonly
+      `Name` = `DefaultValue`;
+?EndIf
+?EndIf
+?EndFor
+    }
+  }
+
+  [Serializable]
+  public class Dn`DBOBJECT_NAME` : System.Collections.Generic.List<Dd`DBOBJECT_NAME`>
+  {
+    public Dn`DBOBJECT_NAME`() : base() {}
+    public Dn`DBOBJECT_NAME`(int xCapacity) : base(xCapacity) {}
+
+    public new Dd`DBOBJECT_NAME` this[int xIndex]
+    {
+      get { return (Dd`DBOBJECT_NAME`) base[xIndex]; }
+      set { base[xIndex] = value; }
+    }
+  }
+
+
+}
+?If Eval '`FILE_PREFIX`' == ''
+  ?Write `APPLICATION_PREFIX`_DataAccessLibrary\`APPLICATION_PREFIX`_Da`DBOBJECT_NAME`.cs
+?Else
+  ?Write `FILE_PREFIX`_DataAccessLibrary\`FILE_PREFIX`_Da`DBOBJECT_NAME`.cs
+?EndIf

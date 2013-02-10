@@ -1,0 +1,64 @@
+?LoadTable `DATABASE_NAME`.`DBTABLE_NAME`
+?Use `DBTABLE_NAME`
+    private void InvalidateField(string message, string fieldName)
+    {
+      AppEx aex = new AppEx(message);
+      aex["FieldName"] = fieldName;
+      throw aex;
+    }
+
+?ForEachField
+?If Column `ColumnName` !EndsWith "_X" 
+    public `CsDataType` `Name`
+    {
+      get { return store.Buffer.`Name`; }
+
+?If Column `ColumnName` !IsReadonly 
+      set 
+      { 
+?If Column `ColumnName` IsText
+?IfNot Column `ColumnName` IsMemo
+        if (value.Length > `Length`) InvalidateField("Too long", "`DBOBJECT_NAME`.`Name`");
+?EndIf
+?EndIf
+#if __REALCHANGE__
+        if (store.Buffer.`Name` != value)
+        {
+          store.Buffer.`Name` = value; 
+          store.mod`Name` = true;
+        }
+#else
+        store.Buffer.`Name` = value; 
+        store.mod`Name` = true;
+#endif
+      }
+?EndIf
+    }
+?EndIf
+?EndFor
+?If Column Content_X Exists
+    public PropertyList Content;
+?EndIf
+
+#if __FIELDLIST__
+    public SortedList<string, object> GetAsList()
+    {
+      SortedList<string, object> items = new SortedList<string, object>();
+?ForEachField
+?If Column `ColumnName` IsType timestamp
+?Else
+      items["`Name`"] = `Name`;
+?EndIf
+?EndFor
+      return items;
+    }
+
+    public void SetFromList(SortedList<string, object> items)
+    {
+?ForEachField
+?If Column `ColumnName` !IsReadonly
+      if (items.ContainsKey("`Name`")) `Name`= (`CsDataType`)items["`Name`"];
+?EndIf
+?EndFor
+    }
+#endif

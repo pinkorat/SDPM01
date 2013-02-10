@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A8AB74D3-92E7-4F46-A382-A6D35099A19B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ASL.Forms</RootNamespace>
+    <AssemblyName>ASL_FormSupport</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ASLGEN_DataDef">
+      <HintPath>..\..\..\_Library\ASLGEN_DataDef.dll</HintPath>
+    </Reference>
+    <Reference Include="ASL_ControlsLibrary">
+      <HintPath>..\..\..\_Library\ASL_ControlsLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="ASL_Library">
+      <HintPath>..\..\..\_Library\ASL_Library.dll</HintPath>
+    </Reference>
+    <Reference Include="HtmlAgilityPack">
+      <HintPath>..\..\..\_Library\HtmlAgilityPack.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ASL_Forms_DataStore.cs" />
+    <Compile Include="ASL_Forms_ActivityLog.cs" />
+    <Compile Include="ASL_Forms_ControlTag.cs" />
+    <Compile Include="ASL_Forms_DropDownItemList.cs" />
+    <Compile Include="ASL_Forms_ExpressionEvaluator.cs" />
+    <Compile Include="ASL_Forms_FieldFormatter.cs" />
+    <Compile Include="ASL_Forms_FieldTextParser.cs" />
+    <Compile Include="ASL_Forms_Msg.cs" />
+    <Compile Include="ASL_Forms_Result.cs" />
+    <Compile Include="ASL_Forms_UnitConvertor.cs" />
+    <Compile Include="ASL_Forms_UseNotes.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ASL_Forms_DaUser.cs" />
+    <Compile Include="ASL_Forms_DaPickList.cs" />
+    <Compile Include="ASL_Forms_DdBase.cs" />
+    <Compile Include="ASL_Forms_DataStore_User.cs" />
+    <Compile Include="ASL_Forms_RevisionInfo.cs" />
+    <Compile Include="ASL_Forms_DataStore_ChangeLog.cs" />
+    <Compile Include="ASL_Forms_DataStore_DotNetAssembly.cs" />
+    <Compile Include="ASL_Forms_ChildForm.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ASL_Forms_ChildForm.designer.cs">
+      <DependentUpon>ASL_Forms_ChildForm.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ASL_Forms_ChildForm.resx">
+      <DependentUpon>ASL_Forms_ChildForm.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

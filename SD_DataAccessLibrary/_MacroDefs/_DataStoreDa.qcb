@@ -1,0 +1,221 @@
+﻿'' _DataStoreDa.qcb
+''
+// Generated: `CURRENT_TIME`
+
+?LoadTable `DATABASE_NAME`.`DBTABLE_NAME`
+?Use `DBTABLE_NAME`
+''
+?DEFINE MODULE_NAME [`APPLICATION_NAMESPACE``SUBSYSTEM_NAMESPACE``NAMESPACE`_Db`DBOBJECT_NAME`]
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Transactions;
+using System.Windows.Forms;
+using System.ComponentModel;
+using ASL;
+
+?If Eval '`SUBSYSTEM_NAMESPACE`' == ''
+?DEFINE APPLICATION_PREFIX [`APPLICATION_NAMESPACE`]
+
+namespace `APPLICATION_NAMESPACE`
+?ElseIf Eval '`NAMESPACE`' == ''
+?DEFINE APPLICATION_PREFIX [`APPLICATION_NAMESPACE``SUBSYSTEM_NAMESPACE`]
+using `APPLICATION_NAMESPACE`;
+
+namespace `APPLICATION_NAMESPACE`.`SUBSYSTEM_NAMESPACE`
+?Else
+?DEFINE APPLICATION_PREFIX [`APPLICATION_NAMESPACE``SUBSYSTEM_NAMESPACE``NAMESPACE`]
+using `APPLICATION_NAMESPACE`;
+using `APPLICATION_NAMESPACE`.`SUBSYSTEM_NAMESPACE`;
+
+namespace `APPLICATION_NAMESPACE`.`SUBSYSTEM_NAMESPACE`.`NAMESPACE`
+?EndIf
+{
+  public partial class DataStore
+  {
+#if false
+    static public BindingList<Dd`DBOBJECT_NAME`Ext> Get`DBOBJECT_NAME/ToPlural`()
+    {
+      BindingList<Dd`DBOBJECT_NAME`Ext> list = new BindingList<Dd`DBOBJECT_NAME`Ext>();
+      Da`DBOBJECT_NAME` da = new Da`DBOBJECT_NAME`(DataStore.DbConnection);
+      Dn`DBOBJECT_NAME` dn = da.Fill();
+      foreach (Dd`DBOBJECT_NAME` dd in dn) list.Add(new Dd`DBOBJECT_NAME`Ext(dd));
+      return list;
+    }
+#endif
+
+    static public bool Save`DBOBJECT_NAME/ToSingular`(ref Dd`DBOBJECT_NAME`Ext item, RevisionInfo revisionInfo)
+    {
+      Da`DBOBJECT_NAME` da = new Da`DBOBJECT_NAME`(DataStore.DbConnection);
+      if (!da.GetById(item.Id)) return false;
+?ForEachField
+?If Column `Name` !IsReadonly
+?If Eval '`Name`' != 'Modified'
+?If Eval '`Name`' != 'ModifiedBy'
+?If Eval '`Name`' != 'IsActive'
+      da.`Name` = item.`Name`;
+?EndIf
+?EndIf
+?EndIf
+?EndIf
+?EndFor      
+      bool ok = true;
+      if (da._IsModified)
+      {
+        da.Modified = DateTime.Now;
+        da.ModifiedBy = Environment.UserName;
+        ok = da.Save();
+        if (ok) AddFsaChangeLog(da.TableName, da.Id, da.Timestamp, revisionInfo);
+        if (ok) item = new Dd`DBOBJECT_NAME`Ext(da.GetBuffer());
+      }
+      return ok;
+    }
+
+    static public bool Add`DBOBJECT_NAME/ToSingular`(ref Dd`DBOBJECT_NAME`Ext item, RevisionInfo revisionInfo)
+    {
+      Da`DBOBJECT_NAME` da = new Da`DBOBJECT_NAME`(DataStore.DbConnection);
+      da.Clear();
+?ForEachField
+?If Column `ColumnName` !IsReadonly
+      da.`Name` = item.`Name`;
+?EndIf
+?EndFor
+      bool ok = da.Insert();
+      if (ok) AddFsaChangeLog(da.TableName, da.Id, da.Timestamp, revisionInfo); //add
+      if (ok) item = new Dd`DBOBJECT_NAME`Ext(da.GetBuffer());
+      return ok;
+    }
+
+    static public bool Delete`DBOBJECT_NAME/ToSingular`(Dd`DBOBJECT_NAME`Ext item, RevisionInfo revisionInfo)
+    {
+      Da`DBOBJECT_NAME` da = new Da`DBOBJECT_NAME`(DataStore.DbConnection);
+      bool ok = da.DeleteById(item.Id);
+      if (ok) AddFsaChangeLog(da.TableName, item.Id, item.Timestamp, revisionInfo); //delete
+	  return ok;
+    }
+
+    static public Dd`DBOBJECT_NAME`Ext Get`DBOBJECT_NAME/ToSingular`Info(int `DBOBJECT_NAME/ToSingular/ToVarName`REF)
+    {
+      Da`DBOBJECT_NAME` da = new Da`DBOBJECT_NAME`(DataStore.DbConnection);
+      if (da.GetById(`DBOBJECT_NAME/ToSingular/ToVarName`REF))
+        return new Dd`DBOBJECT_NAME`Ext(da.GetBuffer());
+      else
+        return null;
+    }
+
+?If Eval "`PARENTREF`" != "$NONE$"      
+    static public BindingList<Dd`DBOBJECT_NAME`Ext> Get`DBOBJECT_NAME`List(int `PARENTREF/ToVarName`REF)
+?Else
+    static public BindingList<Dd`DBOBJECT_NAME`Ext> Get`DBOBJECT_NAME`List()
+?EndIf
+    {
+      Da`DBOBJECT_NAME` da`DBOBJECT_NAME` = new Da`DBOBJECT_NAME`(DataStore.DbConnection);
+?If Eval "`PARENTREF`" != "$NONE$"      
+      Dn`DBOBJECT_NAME` dn = da`DBOBJECT_NAME`.FillBy`PARENTREF`(`PARENTREF/ToVarName`REF);
+?Else
+      Dn`DBOBJECT_NAME` dn = da`DBOBJECT_NAME`.Fill();
+?EndIf
+      BindingList<Dd`DBOBJECT_NAME`Ext> list = new BindingList<Dd`DBOBJECT_NAME`Ext>();
+      foreach (Dd`DBOBJECT_NAME` dd in dn)
+        list.Add(new Dd`DBOBJECT_NAME`Ext(dd));
+      return list;
+    }
+
+?If Eval "`PARENTREF`" != "$NONE$"      
+    static public void Update`DBOBJECT_NAME`(BindingSource binding, int `PARENTREF/ToVarName`REF, RevisionInfo revInfo)
+?Else
+    static public void Update`DBOBJECT_NAME`(BindingSource binding, RevisionInfo revInfo)
+?EndIf
+    {
+      BindingList<Dd`DBOBJECT_NAME`Ext> list = (BindingList<Dd`DBOBJECT_NAME`Ext>)binding.DataSource;
+      try
+      {
+        using (TransactionScope scope = new TransactionScope())
+        {
+        Da`DBOBJECT_NAME` da = new Da`DBOBJECT_NAME`(DataStore.CloneDbConnection());
+        foreach (Dd`DBOBJECT_NAME`Ext item in list)
+        {// do deletes first
+          bool existing = da.GetById(item.Id);
+          if (existing && item.DeleteFlag)
+          {// delete here - avoid validation
+            da.DeleteById(item.Id);
+            AddFsaChangeLog(da.TableName, item.Id, da.Timestamp, revInfo);  
+          }
+        }
+        
+        foreach (Dd`DBOBJECT_NAME`Ext item in list)
+        {
+          if (item.DeleteFlag) continue; // already done above
+          //if (item.`KEYFIELD` == string.Empty) continue; // already done above
+          bool existing = da.GetById(item.Id);
+          if (!existing)
+          {
+            da.Clear();
+          }
+?ForEachField
+?If Column `Name` !IsReadonly
+?If Eval '`Name`' != 'Modified'
+?If Eval '`Name`' != 'ModifiedBy'
+?If Eval '`Name`' != 'IsActive'
+          da.`Name` = item.`Name`;
+?EndIf
+?EndIf
+?EndIf
+?EndIf
+?EndFor
+          if (!existing)
+          {
+?If Eval "`PARENTREF`" != "$NONE$"
+            da.`PARENTREF`REF = `PARENTREF/ToVarName`REF;
+?EndIf
+            da.Insert();
+            AddFsaChangeLog(da.TableName, da.Id, da.Timestamp, revInfo); 
+          }
+          else
+          {
+            if (!da._IsModified) continue;
+            da.Modified = DateTime.Now;
+            da.ModifiedBy = Environment.UserName;
+            da.Save();
+            AddFsaChangeLog(da.TableName, da.Id, da.Timestamp, revInfo);           }
+        }
+          scope.Complete();
+        }
+?If Eval "`PARENTREF`" != "$NONE$"      
+        binding.DataSource = Get`DBOBJECT_NAME`List(`PARENTREF/ToVarName`REF);
+?Else
+        binding.DataSource = Get`DBOBJECT_NAME`List();
+?EndIf
+      }
+      catch (AppEx)
+      {
+        throw;
+      }
+      catch (Exception exc)
+      {
+        throw new AppEx(exc, "Error updating `DBOBJECT_NAME`");
+      }
+    }
+  }
+  
+  public class Dd`DBOBJECT_NAME`Ext : Dd`DBOBJECT_NAME`
+  {
+    public bool DeleteFlag { get; set; }
+
+    public Dd`DBOBJECT_NAME`Ext()
+      : base()
+    {
+    }
+
+    public Dd`DBOBJECT_NAME`Ext(Dd`DBOBJECT_NAME` dd)
+      : base(dd)
+    {
+    }
+  }
+
+}
+?If Eval '`FILE_PREFIX`' == ''
+  ?Write `APPLICATION_PREFIX`_DataStore\`APPLICATION_PREFIX`_DataStore_`DBOBJECT_NAME`.cs
+?Else
+  ?Write `FILE_PREFIX`_DataStore\`FILE_PREFIX`_DataStore_`DBOBJECT_NAME`.cs
+?EndIf
